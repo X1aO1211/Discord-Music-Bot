@@ -9,6 +9,8 @@ let player = null;
 let channel = null;
 let listenerAdded = false;
 
+let musicMessage = null;
+
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('play')
@@ -21,6 +23,12 @@ module.exports = {
         channel = interaction.channel;
         const url = interaction.options.getString('url');
 
+        //test validation
+        if (!isValidYouTubeUrl(url)) {
+            await interaction.reply('Invalid YouTube URL');
+            return;
+        }
+
         try {
             const connection = joinVoiceChannel({
                 channelId: interaction.member.voice.channelId,
@@ -32,7 +40,13 @@ module.exports = {
                 console.log('Connection is ready!');
             });
 
-            await interaction.reply('Bot has joined VC');
+            connection.on(VoiceConnectionStatus.Disconnected, ()=>{
+                console.log("connection disconnected!")
+                //clear the queue
+                queue = new Array;
+            })
+
+            await interaction.reply({ content: 'music is added!', ephemeral: true });
 
             if (!player) {
                 player = createAudioPlayer();
@@ -65,6 +79,12 @@ module.exports = {
     },
 };
 
+function isValidYouTubeUrl(url) {
+    //https:// + youtube.com + ???
+    const regex = /^(https?:\/\/)?(www\.youtube\.com|youtu\.?be)\/.+$/;
+    return regex.test(url);
+}
+
 async function playNext() {
     if (queue.length === 0) {
         console.log("Queue is empty.");
@@ -75,18 +95,24 @@ async function playNext() {
     //console.log(track);
 
     let stream = ytdl(track, { filter: 'audioonly', highWaterMark: 32 * 1024 * 1024 });
-    //console.log(stream);
+    
     let resource = createAudioResource(stream);
 
     let info = await ytdl.getBasicInfo(track);
 
     const MusicEmbed = new EmbedBuilder()
-        .setColor(0xce0037)  
+        .setColor(0xe9b1cd)  
         .setTitle('Music Bot')
         .addFields({ name: 'Now playing:', value: info.videoDetails.title, inline: true })
         .setThumbnail(info.videoDetails.thumbnails[2].url)
         .setURL(info.videoDetails.video_url);
-    await channel.send({ embeds: [MusicEmbed] });
+
+    //edit the embed
+    if (musicMessage) {
+        await musicMessage.edit({ embeds: [MusicEmbed] });
+    } else {
+        musicMessage = await channel.send({ embeds: [MusicEmbed] });
+    }
 
     player.play(resource);
 }
