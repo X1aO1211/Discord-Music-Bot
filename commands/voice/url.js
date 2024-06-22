@@ -97,6 +97,7 @@ async function playNext() {
     let stream = ytdl(track, { filter: 'audioonly', highWaterMark: 32 * 1024 * 1024 });
     
     let resource = createAudioResource(stream);
+    console.log(resource);
 
     let info = await ytdl.getBasicInfo(track);
 

@@ -19,5 +19,8 @@
     "nodemon": "^3.0.3",
     "ytdl-core": "^4.11.5",
     "ytpl": "^2.3.0"
+  },
+  "devDependencies": {
+    "electron": "^31.0.2"
   }
 }
