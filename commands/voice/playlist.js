@@ -64,7 +64,7 @@ module.exports = {
                         params: {
                             part: 'snippet',
                             playlistId: playlistId,
-                            maxResults: 50,
+                            maxResults: 20,
                             pageToken: nextPageToken,
                             key: YT_API_KEY 
                         }
@@ -88,7 +88,7 @@ module.exports = {
                 }
                 const track = videoUrls[currentIndex];
                 const stream = ytdl(track, { filter: 'audioonly', highWaterMark: 32 * 1024 * 1024 });
-                const resource = createAudioResource(stream, { inputType: 'arbitrary', inlineVolume: true });
+                const resource = createAudioResource(stream);
 
                 player.play(resource);
 
@@ -111,10 +111,14 @@ module.exports = {
                     currentIndex++;
                     playNext();
                 });
+
+                player.on(AudioPlayerStatus.NextSong, () => {
+                    //console.log("next song");
+                    player.emit(AudioPlayerStatus.Idle);
+                });
             };
 
-        playNext();
-           
+            playNext(); 
 
         } catch (error) {
             console.error(error);
