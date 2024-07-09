@@ -1,9 +1,10 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { joinVoiceChannel, VoiceConnectionStatus } = require('@discordjs/voice');
+const { joinVoiceChannel, VoiceConnectionStatus, PlayerSubscription } = require('@discordjs/voice');
 const { createAudioPlayer, createAudioResource, AudioPlayerStatus } = require('@discordjs/voice');
 const { YT_API_KEY } = require("../../config.json");
 const ytdl = require('ytdl-core');
 const axios = require('axios');//yt api
+const globalData = require('../../globalData');
 
 let subscription = null;
 let player = null;
@@ -16,15 +17,13 @@ module.exports = {
         .setDescription('Play a YouTube Playlist')
         .addStringOption(option =>
             option.setName('url')
-                .setDescription('URL of the YouTube playlist')
+                .setDescription('URL of the YT playlist #YT mixes are invalid#')
                 .setRequired(true)),
     async execute(interaction) {
         channel = interaction.channel;
         const url = interaction.options.getString('url');
-
-        //test validation
         if (!isValidYouTubePlaylistUrl(url)) {
-            await interaction.reply('Invalid YouTube URL');
+            await interaction.reply({ content: 'Invalid YouTube URL', ephemeral: true });
             return;
         }
 
@@ -35,26 +34,29 @@ module.exports = {
                 adapterCreator: interaction.guild.voiceAdapterCreator,
             });
 
-            connection.on(VoiceConnectionStatus.Ready, () => {
+            connection.once(VoiceConnectionStatus.Ready, () => {
                 console.log('Connection is ready!');
             });
 
-            connection.on(VoiceConnectionStatus.Disconnected, ()=>{
-                console.log("connection disconnected!")
-            })
+            connection.once(VoiceConnectionStatus.Disconnected, () => {
+                //clear the queue
+                globalData.queue.length = 0;
+                console.log('Disconnected!');
+            });
 
-            await interaction.reply({ content: 'playlist is added!', ephemeral: true });
+            await interaction.reply({ content: 'Playlist is added!', ephemeral: true });
 
             if (!player) {
-                player = createAudioPlayer();
+            player = createAudioPlayer();
             }
+
+            player.setMaxListeners(50);
 
             if (!subscription) {
                 subscription = connection.subscribe(player);
             }
 
             const playlistId = new URL(url).searchParams.get('list');
-            //console.log(playlistId);
 
             const fetchPlaylistVideos = async (playlistId) => {
                 let videos = [];
@@ -75,49 +77,61 @@ module.exports = {
                 } while (nextPageToken);
                 return videos;
             };
+            
 
             const videoUrls = await fetchPlaylistVideos(playlistId);
             //console.log(videoUrls);
 
-            let currentIndex = 0;
+            globalData.queue.push(...videoUrls);
+            //console.log(globalData.queue.length);
 
             const playNext = async() => {
-                if (currentIndex >= videoUrls.length) {
+                if (globalData.queue.length <= 0) {
                     connection.destroy();
+                    player.emit(AudioPlayerStatus.Paused);
                     return;
                 }
-                const track = videoUrls[currentIndex];
-                const stream = ytdl(track, { filter: 'audioonly', highWaterMark: 32 * 1024 * 1024 });
-                const resource = createAudioResource(stream);
+                const track = globalData.queue[0];
+                globalData.queue.shift();
 
-                player.play(resource);
+                try {
+                    const stream = ytdl(track, { quality: 'highestaudio', filter: 'audioonly', highWaterMark: 64 * 1024 * 1024 });
+                    
+                    stream.on('error', (error) => {
+                        console.error(`Error occurred while streaming track: ${track}`, error);
+                        player.emit(AudioPlayerStatus.Idle);
+                    });
 
-                let info = await ytdl.getBasicInfo(track);
-                const MusicEmbed = new EmbedBuilder()
-                    .setColor(0xe9b1cd)  
-                    .setTitle('Music Bot')
-                    .addFields({ name: 'Now playing:', value: info.videoDetails.title, inline: true })
-                    .setThumbnail(info.videoDetails.thumbnails[2].url)
-                    .setURL(info.videoDetails.video_url);
+                    const resource = createAudioResource(stream);
+                    
+                    player.play(resource);
 
-                //edit the embed
-                if (musicMessage) {
-                    await musicMessage.edit({ embeds: [MusicEmbed] });
-                } else {
-                    musicMessage = await channel.send({ embeds: [MusicEmbed] });
+                    let info = await ytdl.getBasicInfo(track);
+                    const MusicEmbed = new EmbedBuilder()
+                        .setColor(0xe9b1cd)  
+                        .setTitle('Music Bot')
+                        .addFields({ name: 'Now playing:', value: info.videoDetails.title, inline: true })
+                        .setThumbnail(info.videoDetails.thumbnails[2].url)
+                        .setURL(info.videoDetails.video_url);
+
+                    if (musicMessage) {
+                        await musicMessage.edit({ embeds: [MusicEmbed] });
+                    } else {
+                        musicMessage = await channel.send({ embeds: [MusicEmbed] });
+                    }
+
+                } catch (error) {
+                    console.error(`Error playing track: ${track}`, error);
+                    globalData.queue.shift();
+                    playNext();
+                    return;
                 }
 
                 player.once(AudioPlayerStatus.Idle, () => {
-                    currentIndex++;
+                    //console.log(globalData.queue.length);
                     playNext();
                 });
-
-                player.on(AudioPlayerStatus.NextSong, () => {
-                    //console.log("next song");
-                    player.emit(AudioPlayerStatus.Idle);
-                });
             };
-
             playNext(); 
 
         } catch (error) {
