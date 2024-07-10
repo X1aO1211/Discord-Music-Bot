@@ -84,12 +84,11 @@ module.exports = {
             //console.log(videoUrls);
 
             globalData.queue.push(...videoUrls);
-            console.log(globalData.queue.length);
+            //console.log(globalData.queue.length);
 
             const playNext = async() => {
                 console.log("play next!");
                 if (globalData.queue.length <= 0) {
-                    connection.destroy();
                     return;
                 }
                 const track = globalData.queue[0];
@@ -104,6 +103,7 @@ module.exports = {
                     });
         
                     const resource = createAudioResource(stream);
+                    //console.log(resource);
         
                     player.play(resource);
         
@@ -128,7 +128,7 @@ module.exports = {
             }; 
 
             player.on(AudioPlayerStatus.Idle, () => {
-                console.log("audio player is idle");
+                //console.log("audio player is idle");
                 playNext();
             });
 
@@ -141,8 +141,14 @@ module.exports = {
     },
 };
 
+// function isValidYouTubePlaylistUrl(url) {
+//     // Regular expression to match YouTube playlist URLs
+//     const regex = /^(https?:\/\/)?(www\.)?(youtube\.com\/(playlist\?list=|watch\?v=.*&list=)|youtu\.be\/.*\?list=).+$/;
+//     return regex.test(url);
+// }
+
 function isValidYouTubePlaylistUrl(url) {
-    // Regular expression to match YouTube playlist URLs
-    const regex = /^(https?:\/\/)?(www\.)?(youtube\.com\/(playlist\?list=|watch\?v=.*&list=)|youtu\.be\/.*\?list=).+$/;
+    // Regular expression to match YouTube playlist URLs, excluding mixes
+    const regex = /^(https?:\/\/)?(www\.)?(youtube\.com\/(playlist\?list=(?!RD|UL)[^&]+|watch\?v=.*&list=(?!RD|UL)[^&]+)|youtu\.be\/.*\?list=(?!RD|UL)[^&]+).+$/;
     return regex.test(url);
 }
