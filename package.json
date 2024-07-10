@@ -10,15 +10,13 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@discordjs/opus": "^0.9.0",
     "@discordjs/voice": "^0.16.1",
+    "@distube/ytdl-core": "github:soya-daizu/ytdl-core#sig-patch",
     "axios": "^1.7.2",
     "discord.js": "^14.14.1",
     "ffmpeg-static": "^5.2.0",
     "libsodium-wrappers": "^0.7.13",
-    "nodemon": "^3.0.3",
-    "ytdl": "^1.4.1",
-    "ytdl-core": "^4.11.5"
+    "nodemon": "^3.0.3"
   },
   "devDependencies": {
     "electron": "^31.0.2"

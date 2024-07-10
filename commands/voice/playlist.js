@@ -2,9 +2,10 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { joinVoiceChannel, VoiceConnectionStatus, PlayerSubscription } = require('@discordjs/voice');
 const { createAudioPlayer, createAudioResource, AudioPlayerStatus } = require('@discordjs/voice');
 const { YT_API_KEY } = require("../../config.json");
-const ytdl = require('ytdl-core');
 const axios = require('axios');//yt api
 const globalData = require('../../globalData');
+const ytdl = require('@distube/ytdl-core');
+//const ytdl = require('ytdl-core');
 
 let subscription = null;
 let player = null;
@@ -17,7 +18,7 @@ module.exports = {
         .setDescription('Play a YouTube Playlist')
         .addStringOption(option =>
             option.setName('url')
-                .setDescription('URL of the YT playlist #YT mixes are invalid#')
+                .setDescription('URL of the YT playlist')
                 .setRequired(true)),
     async execute(interaction) {
         channel = interaction.channel;
@@ -47,7 +48,7 @@ module.exports = {
             await interaction.reply({ content: 'Playlist is added!', ephemeral: true });
 
             if (!player) {
-            player = createAudioPlayer();
+                player = createAudioPlayer();
             }
 
             player.setMaxListeners(50);
@@ -66,7 +67,7 @@ module.exports = {
                         params: {
                             part: 'snippet',
                             playlistId: playlistId,
-                            maxResults: 20,
+                            maxResults: 30,
                             pageToken: nextPageToken,
                             key: YT_API_KEY 
                         }
@@ -83,56 +84,55 @@ module.exports = {
             //console.log(videoUrls);
 
             globalData.queue.push(...videoUrls);
-            //console.log(globalData.queue.length);
+            console.log(globalData.queue.length);
 
             const playNext = async() => {
+                console.log("play next!");
                 if (globalData.queue.length <= 0) {
                     connection.destroy();
-                    player.emit(AudioPlayerStatus.Paused);
                     return;
                 }
                 const track = globalData.queue[0];
                 globalData.queue.shift();
-
+                
                 try {
-                    const stream = ytdl(track, { quality: 'highestaudio', filter: 'audioonly', highWaterMark: 64 * 1024 * 1024 });
-                    
+                    const stream = ytdl(track, { quality: 'highestaudio', filter: 'audioonly', highWaterMark: 32 * 1024 * 1024 });
+        
                     stream.on('error', (error) => {
                         console.error(`Error occurred while streaming track: ${track}`, error);
                         player.emit(AudioPlayerStatus.Idle);
                     });
-
+        
                     const resource = createAudioResource(stream);
-                    
+        
                     player.play(resource);
-
+        
                     let info = await ytdl.getBasicInfo(track);
                     const MusicEmbed = new EmbedBuilder()
-                        .setColor(0xe9b1cd)  
+                        .setColor(0xe9b1cd)
                         .setTitle('Music Bot')
                         .addFields({ name: 'Now playing:', value: info.videoDetails.title, inline: true })
                         .setThumbnail(info.videoDetails.thumbnails[2].url)
                         .setURL(info.videoDetails.video_url);
-
+        
                     if (musicMessage) {
                         await musicMessage.edit({ embeds: [MusicEmbed] });
                     } else {
                         musicMessage = await channel.send({ embeds: [MusicEmbed] });
                     }
-
+        
                 } catch (error) {
                     console.error(`Error playing track: ${track}`, error);
-                    globalData.queue.shift();
-                    playNext();
-                    return;
+                    playNext(); 
                 }
+            }; 
 
-                player.once(AudioPlayerStatus.Idle, () => {
-                    //console.log(globalData.queue.length);
-                    playNext();
-                });
-            };
-            playNext(); 
+            player.on(AudioPlayerStatus.Idle, () => {
+                console.log("audio player is idle");
+                playNext();
+            });
+
+            playNext();
 
         } catch (error) {
             console.error(error);
