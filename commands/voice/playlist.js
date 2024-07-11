@@ -1,7 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { joinVoiceChannel, VoiceConnectionStatus, PlayerSubscription } = require('@discordjs/voice');
 const { createAudioPlayer, createAudioResource, AudioPlayerStatus } = require('@discordjs/voice');
-const { YT_API_KEY } = require("../../config.json");
+require('dotenv').config();
 const axios = require('axios');//yt api
 const globalData = require('../../globalData');
 const ytdl = require('@distube/ytdl-core');
@@ -69,7 +69,7 @@ module.exports = {
                             playlistId: playlistId,
                             maxResults: 30,
                             pageToken: nextPageToken,
-                            key: YT_API_KEY 
+                            key: process.env.YT_API_KEY 
                         }
                     });
                     const data = response.data;
