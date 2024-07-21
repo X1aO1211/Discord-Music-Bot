@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { joinVoiceChannel, VoiceConnectionStatus, PlayerSubscription } = require('@discordjs/voice');
+const { joinVoiceChannel, VoiceConnectionStatus } = require('@discordjs/voice');
 const { createAudioPlayer, createAudioResource, AudioPlayerStatus } = require('@discordjs/voice');
 require('dotenv').config();
 const axios = require('axios');//yt api
@@ -16,13 +16,21 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('playlist')
         .setDescription('Play a YouTube Playlist')
+        .addBooleanOption(option =>
+            option.setName('random')
+                .setDescription('shuffle')
+                .setRequired(true))
         .addStringOption(option =>
             option.setName('url')
                 .setDescription('URL of the YT playlist')
                 .setRequired(true)),
+
     async execute(interaction) {
         channel = interaction.channel;
         const url = interaction.options.getString('url');
+        const random = interaction.options.getBoolean('random');
+        //console.log(random);
+
         if (!isValidYouTubePlaylistUrl(url)) {
             await interaction.reply({ content: 'Invalid YouTube URL', ephemeral: true });
             return;
@@ -53,9 +61,11 @@ module.exports = {
 
             player.setMaxListeners(50);
 
-            if (!subscription) {
-                subscription = connection.subscribe(player);
-            }
+            // if (!subscription) {
+            //     subscription = connection.subscribe(player);
+            // }
+
+            connection.subscribe(player);
 
             const playlistId = new URL(url).searchParams.get('list');
 
@@ -83,14 +93,20 @@ module.exports = {
             const videoUrls = await fetchPlaylistVideos(playlistId);
             //console.log(videoUrls);
 
+            if(random)
+                shuffleArray(videoUrls);
+
             globalData.queue.push(...videoUrls);
             //console.log(globalData.queue.length);
 
             const playNext = async() => {
-                console.log("play next!");
+                //console.log("play next!");
+
                 if (globalData.queue.length <= 0) {
+                    connection.disconnect();
                     return;
                 }
+
                 const track = globalData.queue[0];
                 globalData.queue.shift();
                 
@@ -112,8 +128,9 @@ module.exports = {
                         .setColor(0xe9b1cd)
                         .setTitle('Music Bot')
                         .addFields({ name: 'Now playing:', value: info.videoDetails.title, inline: true })
-                        .setThumbnail(info.videoDetails.thumbnails[2].url)
-                        .setURL(info.videoDetails.video_url);
+                        .setImage(info.videoDetails.thumbnails[2].url)
+                        .setURL(info.videoDetails.video_url)
+                        .setFooter({ text: globalData.queue.length + ' songs left' });
         
                     if (musicMessage) {
                         await musicMessage.edit({ embeds: [MusicEmbed] });
@@ -128,7 +145,6 @@ module.exports = {
             }; 
 
             player.on(AudioPlayerStatus.Idle, () => {
-                //console.log("audio player is idle");
                 playNext();
             });
 
@@ -141,14 +157,16 @@ module.exports = {
     },
 };
 
-// function isValidYouTubePlaylistUrl(url) {
-//     // Regular expression to match YouTube playlist URLs
-//     const regex = /^(https?:\/\/)?(www\.)?(youtube\.com\/(playlist\?list=|watch\?v=.*&list=)|youtu\.be\/.*\?list=).+$/;
-//     return regex.test(url);
-// }
-
 function isValidYouTubePlaylistUrl(url) {
     // Regular expression to match YouTube playlist URLs, excluding mixes
     const regex = /^(https?:\/\/)?(www\.)?(youtube\.com\/(playlist\?list=(?!RD|UL)[^&]+|watch\?v=.*&list=(?!RD|UL)[^&]+)|youtu\.be\/.*\?list=(?!RD|UL)[^&]+).+$/;
     return regex.test(url);
+}
+
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
 }

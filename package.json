@@ -18,7 +18,7 @@
     "dotenv": "^16.4.5",
     "ffmpeg-static": "^5.2.0",
     "libsodium-wrappers": "^0.7.13",
-    "nodemon": "^3.0.3"
+    "nodemon": "^3.1.4"
   },
   "devDependencies": {
     "electron": "^31.0.2"
