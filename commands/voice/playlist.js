@@ -128,7 +128,7 @@ module.exports = {
                         .setColor(0xe9b1cd)
                         .setTitle('Music Bot')
                         .addFields({ name: 'Now playing:', value: info.videoDetails.title, inline: true })
-                        .setImage(info.videoDetails.thumbnails[2].url)
+                        .setThumbnail(info.videoDetails.thumbnails[2].url)
                         .setURL(info.videoDetails.video_url)
                         .setFooter({ text: globalData.queue.length + ' songs left' });
         
