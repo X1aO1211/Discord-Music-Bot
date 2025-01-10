@@ -1,5 +1,6 @@
 const { REST, Routes } = require('discord.js');
-require('dotenv').config();
+const { token, clientId, guildId } = require('./config.json');
+//require('dotenv').config();
 const fs = require('node:fs');
 const path = require('node:path');
 
@@ -28,7 +29,7 @@ for (const folder of commandFolders) {
 }
 
 //REST class is defined by Discord and this is how you interact with Discord API
-const rest = new REST().setToken(process.env.token);
+const rest = new REST().setToken(token);
 
 //the "()" means execute this function 
 (async () => {
@@ -37,7 +38,7 @@ const rest = new REST().setToken(process.env.token);
 
 		// put method to make HTTP request to Discord API 
 		const data = await rest.put(
-			Routes.applicationGuildCommands(process.env.clientId, process.env.guildId),
+			Routes.applicationGuildCommands(clientId, guildId),
 			{ body: commands },
 		);
 

@@ -1,10 +1,11 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { joinVoiceChannel, VoiceConnectionStatus } = require('@discordjs/voice');
 const { createAudioPlayer, createAudioResource, AudioPlayerStatus } = require('@discordjs/voice');
-require('dotenv').config();
+//require('dotenv').config();
 const axios = require('axios');//yt api
 const globalData = require('../../globalData');
 const ytdl = require('@distube/ytdl-core');
+const { YT_API_KEY } = require('../../config.json');
 //const ytdl = require('ytdl-core');
 
 let subscription = null;
@@ -79,7 +80,7 @@ module.exports = {
                             playlistId: playlistId,
                             maxResults: 30,
                             pageToken: nextPageToken,
-                            key: process.env.YT_API_KEY 
+                            key: YT_API_KEY 
                         }
                     });
                     const data = response.data;
@@ -111,7 +112,7 @@ module.exports = {
                 globalData.queue.shift();
                 
                 try {
-                    const stream = ytdl(track, { quality: 'highestaudio', filter: 'audioonly', highWaterMark: 32 * 1024 * 1024 });
+                    const stream = ytdl(track, { filter: 'audioonly', highWaterMark: 32 * 1024 * 1024 });
         
                     stream.on('error', (error) => {
                         console.error(`Error occurred while streaming track: ${track}`, error);
