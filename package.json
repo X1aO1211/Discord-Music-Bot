@@ -13,9 +13,13 @@
   "dependencies": {
     "@discordjs/voice": "^0.16.1",
 <<<<<<< HEAD
+<<<<<<< HEAD
     "@distube/ytdl-core": "^4.16.12",
 =======
     "@distube/ytdl-core@latest": "^4.16.12",
+=======
+    "@distube/ytdl-core": "^4.16.12",
+>>>>>>> 78f7d29740aa0192e73d4dd50f507be0aa6817c9
     "@electron/packager": "^18.3.3",
 >>>>>>> 9d8e7aa5a480be8aaac177d8c92c1091e751ac14
     "axios": "^1.7.2",
