@@ -12,7 +12,7 @@
   "license": "ISC",
   "dependencies": {
     "@discordjs/voice": "^0.16.1",
-    "@distube/ytdl-core@latest": "^4.16.12",
+    "@distube/ytdl-core": "^4.16.12",
     "@electron/packager": "^18.3.3",
     "axios": "^1.7.2",
     "discord.js": "^14.14.1",
