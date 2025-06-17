@@ -1,0 +1,4 @@
+config.json
+.env
+.dockerignore
+node_modules/
