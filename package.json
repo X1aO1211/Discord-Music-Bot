@@ -1,7 +1,7 @@
 {
-  "name": "bot",
-  "version": "1.0.0",
-  "description": "",
+  "name": "discord_music_bot",
+  "version": "1.1.0",
+  "description": "using yt-dlp instead",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -11,13 +11,14 @@
   "author": "mllll",
   "license": "ISC",
   "dependencies": {
-    "@discordjs/voice": "^0.16.1",
-    "@distube/ytdl-core": "^4.16.12",
-    "axios": "^1.7.2",
-    "discord.js": "^14.14.1",
-    "dotenv": "^16.4.5",
-    "ffmpeg-static": "^5.2.0",
-    "libsodium-wrappers": "^0.7.13",
+    "@discordjs/opus": "^0.10.0",
+    "@discordjs/voice": "^0.19.2",
+    "axios": "^1.14.0",
+    "discord.js": "^14.26.0",
+    "distube": "^5.2.3",
+    "dotenv": "^17.4.0",
+    "ffmpeg-static": "^5.3.0",
+    "libsodium-wrappers": "^0.8.2",
     "nodemon": "^3.1.4"
   }
 }

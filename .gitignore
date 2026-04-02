@@ -2,3 +2,6 @@ config.json
 .env
 .dockerignore
 node_modules/
+./commands/voice/cut.js
+./commands/voice/add.js
+./commands/voice/nextSong.js

@@ -1,18 +1,30 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
-const { getVoiceConnection, AudioPlayerStatus } = require('@discordjs/voice');
+const { getVoiceConnection } = require('@discordjs/voice');
 
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('next')
-		.setDescription('next song!')
+		.setDescription('Skip to the next song')
 		.setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+
 	async execute(interaction) {
 		const connection = getVoiceConnection(interaction.guild.id);
-        //console.log(connection);
+
+		if (!connection || !connection.state.subscription) {
+			await interaction.reply({
+				content: 'Nothing is playing right now.',
+				ephemeral: true,
+			});
+			return;
+		}
 
 		const player = connection.state.subscription.player;
-		player.emit(AudioPlayerStatus.Paused);
-		player.emit(AudioPlayerStatus.Idle);
-        await interaction.reply({ content: 'Next Song!', ephemeral: true })
+
+		player.stop(true); // this should trigger your Idle handler
+
+		await interaction.reply({
+			content: 'Next song!',
+			ephemeral: true,
+		});
 	},
 };
